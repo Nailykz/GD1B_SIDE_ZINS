@@ -1,0 +1,273 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 10</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var player;
+var trampoline;
+var trophee;
+var cranes;
+var button;
+var doublesaut=false;
+var jumpCount=0;
+var cursors;
+var wallsLayer;
+var gameOver = false;
+
+var game = new Phaser.Game(config);
+
+
+function preload ()
+{
+    this.load.image('sky', 'assets/sky.png');
+    this.load.image('ground', 'assets/platform.png');
+    this.load.image('trophee', 'assets/trophee_v1.png');
+    this.load.image('cranes', 'assets/crane_v1.png');
+    this.load.image('button', 'assets/trophee.png');
+    this.load.spritesheet('dude', 'assets/perso.png', { frameWidth: 31.2, frameHeight: 40 });
+    this.load.image('tiles','assets/tiles/map.png');
+    this.load.tilemapTiledJSON('map','assets/tiles/tilemaps.json');
+    this.load.image('trampoline', 'assets/trampoline_v1.png');
+    
+}
+
+function create ()
+{  
+    this.add.image(640, 360, 'sky');
+    platforms = this.physics.add.staticGroup();
+
+    const map = this.make.tilemap({key : 'map'});
+    const tileset = map.addTilesetImage('moutain','tiles');
+    
+    wallsLayer = map.createDynamicLayer('murs',tileset);
+    wallsLayer.setCollisionByProperty({ collides: true });
+    wallsLayer.setCollisionByExclusion(-1,true);
+    
+    player = this.physics.add.sprite(75,600, 'dude');//(75,600)
+    trampoline = this.physics.add.sprite(100, 350, 'trampoline');
+    trophee = this.physics.add.sprite(1210, 50, 'trophee');
+    trophee.visible = false;
+    
+    
+    cranes = this.physics.add.sprite(225, 270, 'cranes');
+    cranes.visible = false;
+    cranes.body.allowGravity = false;
+    
+    cranes1 = this.physics.add.sprite(255, 270, 'cranes');
+    cranes1.visible = false;
+    cranes1.body.allowGravity = false;
+    
+    cranes2 = this.physics.add.sprite(500, 450, 'cranes');
+    cranes2.visible = false;
+    cranes2.body.allowGravity = false;
+    
+    cranes3 = this.physics.add.sprite(575, 380, 'cranes');
+    cranes3.visible = false;
+    cranes3.body.allowGravity = false;
+    
+    cranes4 = this.physics.add.sprite(1100, 425, 'cranes');
+    cranes4.visible = false;
+    cranes4.body.allowGravity = false;
+    
+    cranes5 = this.physics.add.sprite(980, 170, 'cranes');
+    cranes5.visible = false;
+    cranes5.body.allowGravity = false;
+    
+    cranes6 = this.physics.add.sprite(1040, 170, 'cranes');
+    cranes6.visible = false;
+    cranes6.body.allowGravity = false;
+    
+    cranes7 = this.physics.add.sprite(1100, 170, 'cranes');
+    cranes7.visible = false;
+    cranes7.body.allowGravity = false;
+    
+    cranes8 = this.physics.add.sprite(1160, 170, 'cranes');
+    cranes8.visible = false;
+    cranes8.body.allowGravity = false;
+    
+    cranes9 = this.physics.add.sprite(920, 170, 'cranes');
+    cranes9.visible = false;
+    cranes9.body.allowGravity = false;
+    
+    cranes10 = this.physics.add.sprite(645, 150, 'cranes');
+    cranes10.visible = false;
+    cranes10.body.allowGravity = false;
+    
+    cranes11 = this.physics.add.sprite(700, 100, 'cranes');
+    cranes11.visible = false;
+    cranes11.body.allowGravity = false;
+    
+    
+
+    this.physics.world.addCollider(player, wallsLayer)
+    this.cameras.main.startFollow(player);
+    
+    player.setBounce(0.0);
+    player.setCollideWorldBounds(false);
+   
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'dude', frame: 4 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+
+    cursors = this.input.keyboard.createCursorKeys();
+   
+    this.physics.add.collider(player, wallsLayer);
+    this.physics.add.collider(trampoline, wallsLayer);
+    this.physics.add.collider(trophee, wallsLayer);
+    this.physics.add.collider(player, platforms, null , null);
+    this.physics.add.collider(cranes, wallsLayer);
+    this.physics.add.collider(cranes1, wallsLayer);
+    this.physics.add.overlap(player, trampoline, collectTrampoline, null, this);
+    this.physics.add.overlap(player, cranes, death, null, this);
+    this.physics.add.overlap(player, cranes1, death, null, this);
+    this.physics.add.overlap(player, cranes2, death, null, this);
+    this.physics.add.overlap(player, cranes3, death, null, this);
+    this.physics.add.overlap(player, cranes4, death, null, this);
+    this.physics.add.overlap(player, cranes5, death, null, this);
+    this.physics.add.overlap(player, cranes6, death, null, this);
+    this.physics.add.overlap(player, cranes7, death, null, this);
+    this.physics.add.overlap(player, cranes8, death, null, this);
+    this.physics.add.overlap(player, cranes9, death, null, this);
+    this.physics.add.overlap(player, cranes10, death, null, this);
+    this.physics.add.overlap(player, cranes11, death, null, this);
+}
+
+function update ()
+{
+    player.update();
+    onGround = player.body.blocked.down;
+    
+    if (gameOver)
+    {
+        return;
+    }
+
+    if (cursors.left.isDown)
+    {
+        player.setVelocityX(-160);
+
+        player.anims.play('left', true);
+    }
+    else if (cursors.right.isDown)
+    {
+        player.setVelocityX(160);
+
+        player.anims.play('right', true);
+    }
+    else
+    {
+        player.setVelocityX(0);
+
+        player.anims.play('turn');
+    }
+      
+    if (cursors.up.isDown && onGround)
+    {
+        player.setVelocityY(-310);
+
+    }
+    
+    if(doublesaut===true)
+    {
+        const isJumpJustDownup = Phaser.Input.Keyboard.JustDown(cursors.up)         
+        
+        if (isJumpJustDownup && (onGround || jumpCount < 2))
+        {
+            player.setVelocityY(-310);
+            jumpCount++
+        }
+
+        if (onGround && !isJumpJustDownup)
+        {
+            jumpCount = 0
+        }     
+        
+    }
+}
+    function collectTrampoline (player, trampoline)
+{
+    trampoline.disableBody(true, true);
+    doublesaut=true;
+    trophee.visible=true;
+    cranes.visible=true
+    cranes1.visible=true
+    cranes2.visible=true;
+    cranes3.visible=true;
+    cranes4.visible=true;
+    cranes5.visible=true
+    cranes6.visible=true
+    cranes7.visible=true
+    cranes8.visible=true
+    cranes9.visible=true
+    cranes10.visible=true
+    cranes11.visible=true
+    this.physics.add.overlap(player, trophee, collectTrophee, null, this);
+    this.add.text(100, 350, 'Vous débloquez le double saut.', { fontFamily: 'Georgia, "Goudy Bookletter 1911", Times, serif' });
+    this.add.text(100, 380, 'Une sortie est apparue.', { fontFamily: 'Georgia, "Goudy Bookletter 1911", Times, serif' });
+    
+}
+    
+    function collectTrophee (player, trophee)
+{
+    trophee.disableBody(true, true);
+    this.physics.pause();
+    this.add.text(1120, 50, 'Vous avez gagné !', { fontFamily: 'Georgia, "Goudy Bookletter 1911", Times, serif' });
+}
+    
+    function death (player, cranes, cranes1, cranes2, cranes3, cranes4, cranes5, cranes6, cranes7, cranes8, cranes9, cranes10, cranes11)
+    {   
+        if(doublesaut===true){
+        this.physics.pause();
+        this.add.text(player.x, player.y, 'Vous avez perdu !', { fontFamily: 'Georgia, "Goudy Bookletter 1911", Times, serif' });}
+    }
+    
+</script>
+
+</body>
+</html>
